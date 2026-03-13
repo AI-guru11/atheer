@@ -29,7 +29,7 @@ There is no linting setup and no test suite. `package.json` has only `dev`, `bui
 
 The Cloudflare Worker (`cloudflare_worker.js`) is deployed separately — it is NOT bundled by Vite:
 ```bash
-wrangler publish cloudflare_worker.js
+wrangler deploy cloudflare_worker.js
 wrangler secret put GEMINI_API_KEY
 ```
 
@@ -38,20 +38,21 @@ wrangler secret put GEMINI_API_KEY
 ## Architecture
 
 ### File Layout
-All source files live at the **project root** — there is no `src/` directory.
+Source files live at the **project root** — there is no `src/` directory.
 
 | File | Role |
 |------|------|
-| `main.jsx` | React entry point, service worker registration, all routes |
-| `AtheerCompletePWA.jsx` | Customer storefront (~2,700 lines, single file) |
-| `AtheerAdminDashboard.jsx` | Admin dashboard (~550 lines, single file) |
-| `GiftExperience.jsx` | QR gift reveal page for recipients (~350 lines) |
+| `main.jsx` | React entry point, service worker registration, routes |
+| `AtheerCompletePWA.jsx` | Customer storefront (~2,150 lines, single file) |
+| `AtheerAdminDashboard.jsx` | Admin dashboard (~610 lines, single file) |
+| `GiftExperience.jsx` | QR gift reveal page for recipients (~400 lines) |
 | `cloudflare_worker.js` | Cloudflare Worker — Gemini AI proxy |
 | `index.css` | Only the three `@tailwind` directives |
 | `index.html` | HTML entry (lang="ar", dir="rtl", PWA meta tags) |
 | `manifest.json` | PWA manifest (standalone, Arabic, dark theme) |
 | `vite.config.js` | Vite config — port 3000, source maps enabled |
-| `tailwind.config.js` | Scans `./*.jsx` and `./index.html` |
+| `tailwind.config.js` | Scans `./index.html`, `./src/**/*.{js,jsx}`, and `./*.jsx` |
+| `postcss.config.js` | PostCSS config — tailwindcss + autoprefixer |
 | `public/sw.js` | Service worker — network-first with offline fallback |
 | `public/_redirects` | SPA fallback rule for Netlify/Cloudflare Pages |
 | `generate-icons.cjs` | Script to generate PWA icon assets |
@@ -68,6 +69,8 @@ All source files live at the **project root** — there is no `src/` directory.
   "react-router-dom": "^7.13.1"
 }
 ```
+Dev dependencies include `@vitejs/plugin-react`, `tailwindcss`, `postcss`, `autoprefixer`, `vite`, and `@types/react*`.
+
 Moyasar SDK (payment) is loaded dynamically from CDN (v`1.14.0`) — NOT in `package.json`.
 
 ### Routing (`main.jsx`)
@@ -106,44 +109,49 @@ recommendedTierId  // result from TryGiftFlowWizard
 Additional important state (may be renamed only if not in the list above):
 ```javascript
 customerName, customerPhone, aiGiftMessage,
-showMoyasarForm, isSubmitting, orderId, deferredInstallPrompt
+showMoyasarForm, isSubmitting, orderId, deferredInstallPrompt,
+showInstallBanner, demoError, isGeneratingMessage, checkoutError,
+prefersReducedMotion, saveData
 ```
 
-### Internal Components (all defined in the same file)
-- `Navbar` — Fixed header: logo, step pills, "Demo" & "Start" buttons
-- `Background` — Animated gradient orbs + grid pattern (framer-motion)
-- `GlassCard` — Glass-morphism card wrapper
+### Internal Components (defined in the same file)
+- `GlassCard` — Glass-morphism card wrapper (React.memo)
 - `PrimaryButton`, `SecondaryButton` — Styled button variants
+- `StepPill` — Funnel step indicator pill
+- `PageShell` — Page layout wrapper
+- `Background` — Animated gradient orbs + grid pattern (framer-motion)
+- `Navbar` — Fixed header: logo, step pills, "Demo" & "Start" buttons
 - `TiltCard` — 3D tilt effect on hover (motion values)
 - `ReviewsSection` — Customer testimonials carousel (4 reviews, autoplay)
 - `TryGiftFlowWizard` — 3-step mini wizard (persona → surprise type → tone) that sets `recommendedTierId`
-- `DemoModal` — Interactive QR unlock simulator (unlock code: `"2024"`)
-- `InstallBanner` — PWA install prompt (Android `beforeinstallprompt` + iOS manual instructions)
+- `DemoModal` — Interactive QR unlock simulator (unlock code: `"2024"`) — defined inside the main App component
+- `InstallBanner` — PWA install prompt (Android `beforeinstallprompt` + iOS manual instructions) — defined inside the main App component
 
 ### Static Data
-- **TIERS:** Bronze (150 SAR), Silver (350 SAR), Gold (700 SAR)
-- **TEMPLATES:** 3 themed digital experience styles — Cyber, Classic, Nature (Unsplash images)
-- **REVIEWS:** 4 customer testimonials with star ratings
+- **TIERS:** Bronze (150 SAR), Silver (350 SAR, `popular: true`), Gold (700 SAR)
+- **TEMPLATES:** 3 themed digital experience styles — Cyber (الثيم السايبر), Classic (الثيم الكلاسيكي), Nature (ثيم الطبيعة) with Unsplash images
+- **REVIEWS:** 4 customer testimonials (نوف, سارة, عبدالله, ريم), all with score 5
 
 ### Animation Presets (defined at top of file)
 ```javascript
-const fade = { hidden: { opacity: 0 }, visible: { opacity: 1 } };
-const rise = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
-const slideIn = { hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } };
+const fade = { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+const rise = { initial: { y: 22, opacity: 0 }, animate: { y: 0, opacity: 1 }, exit: { y: -12, opacity: 0 } };
+const slideIn = { initial: { x: 44, opacity: 0 }, animate: { x: 0, opacity: 1 }, exit: { x: -44, opacity: 0 } };
 ```
 
 ### Code Patterns
 - `cx()` helper for conditional class names
-- `useMemo()` for derived state (recommendations, sorted tiers)
+- `WORKER_URL` constant for the Cloudflare Worker endpoint
+- `useMemo()` for derived state (recommendations, sorted tiers, checkout prices)
 - `useCallback()` for event handlers (avoids unnecessary re-renders)
-- `useRef()` for stale closure prevention (Moyasar callback)
+- `useRef()` for stale closure prevention (Moyasar callback via `moyasarCallbackRef`)
 
 ### Performance & Accessibility
 - Detects `prefers-reduced-motion` — disables heavy animations
 - Detects `connection.saveData` — reduces asset load on slow connections
 - Scrolls to top on every view change
 - `decoding="async"` + `fetchPriority="high"` on above-fold images
-- `<link rel="preconnect">` to Unsplash CDN
+- `<link rel="preconnect">` to Unsplash CDN (in `index.html`)
 
 ---
 
@@ -153,38 +161,44 @@ const slideIn = { hidden: { opacity: 0, x: -20 }, visible: { opacity: 1, x: 0 } 
 PIN gate: hardcoded `"2024"`. Session stored in `sessionStorage` (not `localStorage`).
 
 ### Tabs
-- **Dashboard** — Stats cards (total sales, active orders, pending AI) + recent orders overview
-- **Orders (أحدث الطلبات)** — Full data table with real-time Firestore sync
-- **AI (سجل AI)** — Product recommendation engine per order
-- **QR (الصفحات الرقمية)** — Digital page management with QR code generation
+Four tabs identified by these IDs and header titles:
+- **dashboard** — `'لوحة التحكم'` — Stats cards (total sales, active orders, pending AI) + recent orders overview
+- **orders** — `'إدارة الطلبات'` — Orders data table with real-time Firestore sync
+- **ai** — `'سجل توصيات AI'` — Product recommendation engine per order
+- **qr** — `'الصفحات الرقمية'` — Digital page management with QR code generation
+
+Sidebar navigation labels differ slightly from header titles (e.g., sidebar shows `'الطلبات'` for orders).
 
 ### AI Agent (`runAiAgent`)
-- Calls Worker with a detailed prompt requesting a JSON response
-- Parses JSON from Gemini response (handles ` ```json ` blocks or raw JSON)
-- Extracts: persona analysis, profit margin, digital theme (vibe/colors/puzzle), product list
+- Calls Worker at `WORKER_URL` with a detailed prompt requesting a JSON response
+- Parses JSON from Gemini response (handles ` ```json ``` ` blocks or raw JSON via regex)
+- Extracts: `personaAnalysis`, `profitMargin`, `digitalTheme` (vibe/colors/puzzle), `products` array (name/price/url/reason)
 
 ### Layout
-- Sidebar navigation (collapsible on mobile)
-- Header with search + notification bell
-- Responsive grid layout; background: `bg-[#0a0f1d]` for sidebar/header
+- Sidebar navigation (collapsible on mobile, slides via transform)
+- Header with search (desktop-only) + notification bell
+- Responsive grid layout
+- Sidebar/header background: `bg-[#0a0f1d]`; main content background: `bg-[#07070a]`
 
 ---
 
 ## Gift Experience (`GiftExperience.jsx`)
 
 ### Screens
+Five screens driven by a `status` state string (`loading | error | date_locked | locked | revealed`):
 1. `LoadingScreen` — spinner while fetching order from Firestore
 2. `ErrorScreen` — not found / error state
-3. `DateLockedScreen` — gift locked until `unlockDate` (formatted in Arabic)
+3. `DateLockedScreen` — gift locked until `unlockDate` (formatted in Arabic via `ar-SA` locale)
 4. `LockScreen` — puzzle question input + answer validation (`customQuestion` / `customAnswer`)
 5. `RevealScreen` — success state with confetti + tier badge + AI gift message + survey interests
-6. `Confetti` — 40 falling particles with random colors/delays
+
+Additionally, a `Confetti` helper component renders 40 falling particles with random colors/delays (used within `RevealScreen`).
 
 ### Data Fetching
 Uses `getDocs()` (single fetch, not real-time). Queries orders collection with `where("orderId", "==", orderId)`.
 
 ### Firebase Config
-`GiftExperience.jsx` reads Firebase config from **environment variables** (`VITE_FIREBASE_API_KEY`, etc.) — not hardcoded. This is the exception to the hardcoded config rule below.
+`GiftExperience.jsx` reads Firebase config from **environment variables** (`VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID`) — not hardcoded. This is the exception to the hardcoded config rule.
 
 ---
 
@@ -193,6 +207,8 @@ Uses `getDocs()` (single fetch, not real-time). Queries orders collection with `
 Frontend calls the Cloudflare Worker (`https://atheer-ai.atheer-ai.workers.dev`) with `POST { promptText }`.
 The worker proxies to Gemini (`gemini-2.5-flash-preview-09-2025`) and returns the raw JSON.
 Callers extract `data.candidates[0].content.parts[0].text`.
+
+Both `AtheerCompletePWA.jsx` and `AtheerAdminDashboard.jsx` define a `WORKER_URL` constant pointing to the same endpoint.
 
 Used in two places:
 - `AtheerCompletePWA.jsx` — generates a personalized Arabic gift message at checkout
@@ -205,7 +221,7 @@ Used in two places:
 Same `firebaseConfig` object is hardcoded in `AtheerCompletePWA.jsx` and `AtheerAdminDashboard.jsx` — do not extract it.
 `GiftExperience.jsx` is the exception — it uses `VITE_` environment variables.
 
-**Safe initialization pattern (used everywhere):**
+**Safe initialization pattern (used in all three files):**
 ```javascript
 const fbApp = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
@@ -229,17 +245,17 @@ const db = getFirestore(fbApp);
 
 **Read patterns:**
 - Admin (`AtheerAdminDashboard.jsx`) — `onSnapshot()` with `orderBy("createdAt", "desc")` (real-time)
-- Gift page (`GiftExperience.jsx`) — `getDocs()` (single fetch)
+- Gift page (`GiftExperience.jsx`) — `getDocs()` with `where("orderId", "==", orderId)` (single fetch)
 
 ---
 
 ## Payment (Moyasar)
 
-Moyasar SDK loaded dynamically via CDN (version `1.14.0`) — not in `package.json`.
+Moyasar SDK loaded dynamically via CDN (version constant `MOYASAR_VERSION = "1.14.0"`) — not in `package.json`.
 
 **Flow:**
 1. User reaches checkout view → clicks "Proceed to Payment"
-2. Moyasar form loads dynamically (CSS + JS via CDN)
+2. Moyasar CSS + JS loaded dynamically via `document.createElement` (checked by element ID to avoid double-loading)
 3. `on_completed` callback fires with payment object (held in `moyasarCallbackRef` to avoid stale closures)
 4. If `payment.status === "paid"`: save order to Firestore with `moyasarPaymentId`, navigate to success
 5. On failure: show Arabic error message, reset form
@@ -248,7 +264,7 @@ Moyasar SDK loaded dynamically via CDN (version `1.14.0`) — not in `package.js
 ```javascript
 const price = parseInt(selectedTier?.price) || 0;
 const vat = Math.round(price * 0.15);   // 15% VAT
-const total = price + vat;              // sent to Moyasar in halalas (÷100 internally)
+const total = price + vat;              // sent to Moyasar as total * 100 (halalas)
 ```
 
 ---
@@ -278,10 +294,10 @@ const total = price + vat;              // sent to Moyasar in halalas (÷100 int
 ## Design System
 
 - **Styling**: Tailwind utility classes only — no CSS-in-JS, no CSS modules
-- **Background**: `bg-[#07070a]` everywhere; admin sidebar/header: `bg-[#0a0f1d]`
+- **Background**: `bg-[#07070a]` for main content; admin sidebar/header: `bg-[#0a0f1d]`
 - **Primary accent**: violet-600 → fuchsia-600 → pink-600 gradient
 - **Glass cards**: `bg-white/[0.06] border-white/10 backdrop-blur-xl`
-- **Animations**: framer-motion — presets `fade`, `rise`, `slideIn` defined at top of `AtheerCompletePWA.jsx`
+- **Animations**: framer-motion — presets `fade`, `rise`, `slideIn` defined at top of `AtheerCompletePWA.jsx` using `initial`/`animate`/`exit` keys
 
 ---
 
