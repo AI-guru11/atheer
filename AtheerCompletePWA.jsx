@@ -219,33 +219,31 @@ function PageShell({ children, max = "max-w-7xl" }) {
 function Background() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Solid dark base — prevents any white flash when Safari invalidates this layer */}
+      <div className="absolute inset-0 bg-[#07070a]" />
       <div className="absolute inset-0 opacity-[0.09] [background-image:linear-gradient(to_right,rgba(255,255,255,.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.22)_1px,transparent_1px)] [background-size:74px_74px]" />
       <div className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_20%,transparent_0%,rgba(0,0,0,.45)_60%,rgba(0,0,0,.85)_100%)]" />
 
       <motion.div
         aria-hidden="true"
         className="absolute -top-40 -left-28 h-[640px] w-[640px] rounded-full bg-violet-700/25 blur-3xl"
+        style={{ willChange: "transform" }}
         animate={{ x: [0, 26, -14, 0], y: [0, 10, -18, 0] }}
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         aria-hidden="true"
         className="absolute -bottom-56 -right-40 h-[760px] w-[760px] rounded-full bg-fuchsia-600/18 blur-3xl"
+        style={{ willChange: "transform" }}
         animate={{ x: [0, -22, 16, 0], y: [0, -12, 18, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         aria-hidden="true"
         className="absolute top-1/3 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-indigo-400/10 blur-3xl"
+        style={{ willChange: "transform" }}
         animate={{ scale: [1, 1.08, 1] }}
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
-      />
-
-      <motion.div
-        aria-hidden="true"
-        className="absolute -left-1/3 top-0 h-full w-[70%] rotate-[18deg] bg-[linear-gradient(to_bottom,transparent,rgba(255,255,255,.07),transparent)] blur-2xl opacity-60"
-        animate={{ x: ["-20%", "120%"] }}
-        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
     </div>
   );
@@ -256,7 +254,7 @@ function Navbar({ view, setView, setShowDemo }) {
     <nav className="fixed top-0 left-0 right-0 z-50">
       <div className="absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-violet-700/25 via-fuchsia-600/10 to-transparent pointer-events-none" />
       <div className="mx-auto max-w-7xl px-6 pt-6">
-        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-[#07070a]/65 backdrop-blur-2xl px-5 py-4">
+        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-[#07070a]/80 backdrop-blur-xl px-5 py-4">
           <button type="button" onClick={() => setView("landing")} className="flex items-center gap-3 text-white hover:opacity-90">
             <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-lg shadow-violet-500/25 flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
@@ -319,11 +317,11 @@ function TiltCard({ children, className = "" }) {
     <motion.div
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      style={{ rotateX, rotateY }}
       className={cx("will-change-transform", className)}
       transition={{ type: "spring", stiffness: 220, damping: 18 }}
     >
-      <div style={{ transform: "translateZ(18px)" }}>{children}</div>
+      <div>{children}</div>
     </motion.div>
   );
 }
@@ -1405,7 +1403,7 @@ const App = () => {
   return (
     <div className="min-h-screen bg-[#07070a] text-right text-white selection:bg-violet-500/30 font-sans" dir="rtl">
       <Navbar view={view} setView={setView} setShowDemo={setShowDemo} />
-      <div className="relative">
+      <div className="relative bg-[#07070a]">
         <Background />
 
         <AnimatePresence mode="wait">
