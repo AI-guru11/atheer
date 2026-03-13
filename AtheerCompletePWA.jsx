@@ -250,19 +250,45 @@ function Background() {
 }
 
 function Navbar({ view, setView, setShowDemo }) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 32);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50">
-      <div className="absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-violet-700/25 via-fuchsia-600/10 to-transparent pointer-events-none" />
-      <div className="mx-auto max-w-7xl px-6 pt-6">
-        <div className="flex items-center justify-between rounded-3xl border border-white/10 bg-[#07070a]/80 backdrop-blur-xl px-5 py-4">
-          <button type="button" onClick={() => setView("landing")} className="flex items-center gap-3 text-white hover:opacity-90">
-            <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-lg shadow-violet-500/25 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-              <span className="absolute -inset-1 rounded-2xl bg-white/10 blur-md opacity-40" />
+      <div
+        className={cx(
+          "absolute inset-x-0 -top-24 h-40 bg-gradient-to-b from-violet-700/25 via-fuchsia-600/10 to-transparent pointer-events-none transition-opacity duration-300",
+          scrolled ? "opacity-0" : "opacity-100"
+        )}
+      />
+      <div className={cx("mx-auto max-w-7xl px-4 md:px-6 transition-all duration-300", scrolled ? "pt-3" : "pt-6")}>
+        <div
+          className={cx(
+            "flex items-center justify-between rounded-3xl border border-white/[0.12] bg-[#07070a]/80 backdrop-blur-xl transition-all duration-300",
+            scrolled ? "px-4 py-2.5" : "px-5 py-4"
+          )}
+        >
+          <button type="button" onClick={() => setView("landing")} className="flex items-center gap-2.5 text-white hover:opacity-90">
+            <div
+              className={cx(
+                "relative rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-lg shadow-violet-500/25 flex items-center justify-center transition-all duration-300",
+                scrolled ? "w-8 h-8" : "w-10 h-10"
+              )}
+            >
+              <Sparkles className={cx("text-white transition-all duration-300", scrolled ? "w-4 h-4" : "w-5 h-5")} />
+              <span className="absolute -inset-1 rounded-2xl bg-white/10 blur-md opacity-30" />
             </div>
             <div className="leading-tight text-right">
-              <div className="text-lg md:text-xl font-black tracking-tight">أثـيـر</div>
-              <div className="text-[10px] text-gray-400 -mt-0.5">AI Smart Gifts</div>
+              <div className={cx("font-black tracking-tight transition-all duration-300", scrolled ? "text-base" : "text-lg md:text-xl")}>
+                أثـيـر
+              </div>
+              {!scrolled && <div className="text-[10px] text-gray-400 -mt-0.5">AI Smart Gifts</div>}
             </div>
           </button>
 
@@ -276,13 +302,19 @@ function Navbar({ view, setView, setShowDemo }) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDemo(true)}
-              className="hidden sm:inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-colors"
+              className={cx(
+                "hidden sm:inline-flex items-center gap-2 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all",
+                scrolled ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"
+              )}
             >
               تجربة <PlayCircle className="w-4 h-4 text-violet-300" />
             </button>
             <button
               onClick={() => setView("tiers")}
-              className="inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 bg-white text-black font-black text-sm hover:bg-gray-100 transition-colors"
+              className={cx(
+                "inline-flex items-center gap-2 rounded-2xl bg-white text-black font-black hover:bg-gray-100 transition-all",
+                scrolled ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-sm"
+              )}
             >
               ابدأ الآن <ArrowRight className="w-4 h-4" />
             </button>
@@ -337,7 +369,7 @@ function ReviewsSection() {
   const active = REVIEWS[idx];
 
   return (
-    <div className="mt-16">
+    <div className="mt-20">
       <div className="text-center mb-8">
         <div className="text-sm text-gray-400">آراء العملاء</div>
         <div className="text-2xl md:text-3xl font-black mt-2">الناس تحب «التجربة» قبل الهدية</div>
@@ -554,12 +586,12 @@ function TryGiftFlowWizard({ onStartReal, onOpenDemo, onCompleteWizard, recommen
   }, [step, canNext2, submitWizard]);
 
   return (
-    <div className="mt-16">
+    <div className="mt-20">
       <div className="text-center mb-8">
-        <div className="text-sm text-gray-400">ترقية تجارية</div>
-        <div className="text-2xl md:text-3xl font-black mt-2">اقتراح ذكي يقلّل التردد</div>
+        <div className="text-sm text-gray-400">اكتشف ما يناسبك</div>
+        <div className="text-2xl md:text-3xl font-black mt-2">دعنا نقترح الهدية المثالية</div>
         <div className="text-gray-400 text-sm mt-3 max-w-2xl mx-auto">
-          بدل ما تخلّي العميل يحتار… أعطه اقتراح واحد قوي + سبب. هذا يرفع التحويل مباشرة.
+          ثلاثة أسئلة بسيطة… واقتراح واحد قوي بدلاً من التردد.
         </div>
       </div>
 
@@ -992,27 +1024,63 @@ const App = () => {
     []
   );
 
+  // Refs track whether install conditions are met (avoids stale closures in listeners)
+  const installReadyRef = useRef(false);
+  const scrollReadyRef = useRef(false);
+
   useEffect(() => {
     if (isStandalone) return;
+    let dismissed = false;
     try {
-      if (sessionStorage.getItem("atheer_install_dismissed")) return;
+      if (sessionStorage.getItem("atheer_install_dismissed")) dismissed = true;
     } catch {}
+    if (dismissed) return;
 
+    const tryShow = () => {
+      if (installReadyRef.current && scrollReadyRef.current) {
+        setShowInstallBanner(true);
+      }
+    };
+
+    // Scroll threshold: show only after user has scrolled down meaningfully
+    const onScroll = () => {
+      if (window.scrollY >= 200) {
+        scrollReadyRef.current = true;
+        tryShow();
+        window.removeEventListener("scroll", onScroll);
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Non-iOS: capture beforeinstallprompt; also set a 20s fallback timer
     const handler = (e) => {
       e.preventDefault();
       setDeferredInstallPrompt(e);
-      setShowInstallBanner(true);
+      installReadyRef.current = true;
+      tryShow();
     };
     window.addEventListener("beforeinstallprompt", handler);
 
-    // iOS doesn't fire beforeinstallprompt — show manual instructions after a short delay
-    let iosTimer;
-    if (isIOS) {
-      iosTimer = setTimeout(() => setShowInstallBanner(true), 4000);
-    }
+    // 20s timer for non-iOS (in case prompt fired but scroll hasn't happened yet)
+    const nonIosTimer = !isIOS
+      ? setTimeout(() => {
+          installReadyRef.current = true;
+          tryShow();
+        }, 20000)
+      : null;
+
+    // iOS: show after 30s + scroll (no prompt event on iOS)
+    const iosTimer = isIOS
+      ? setTimeout(() => {
+          installReadyRef.current = true;
+          tryShow();
+        }, 30000)
+      : null;
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("scroll", onScroll);
+      if (nonIosTimer) clearTimeout(nonIosTimer);
       if (iosTimer) clearTimeout(iosTimer);
     };
   }, [isStandalone, isIOS]);
@@ -1364,18 +1432,18 @@ const App = () => {
       className="fixed bottom-4 left-4 right-4 z-[200] max-w-lg mx-auto"
     >
       <GlassCard className="overflow-hidden">
-        <div className="relative p-4 flex items-center gap-4">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/30">
-            <Smartphone className="w-5 h-5 text-white" />
+        <div className="relative p-3 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/25">
+            <Smartphone className="w-4 h-4 text-white" />
           </div>
           <div className="flex-1 text-right min-w-0">
-            <div className="font-black text-white text-sm">ثبّت تطبيق أثير</div>
+            <div className="font-black text-white text-sm">ثبّت أثير كتطبيق</div>
             {isIOS ? (
               <div className="text-xs text-gray-400 mt-0.5 leading-relaxed">
                 اضغط <span className="text-violet-300 font-bold">مشاركة ↑</span> ثم «أضف إلى الشاشة الرئيسية»
               </div>
             ) : (
-              <div className="text-xs text-gray-400 mt-0.5">تجربة أسرع وأفضل — بدون متصفح</div>
+              <div className="text-xs text-gray-400 mt-0.5">وصول أسرع وفتح مباشر من الشاشة الرئيسية</div>
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -1414,53 +1482,39 @@ const App = () => {
                   <div className="lg:col-span-7">
                     <GlassCard className="overflow-hidden">
                       <div className="relative h-full">
-                        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(120%_90%_at_10%_10%,rgba(168,85,247,.22),transparent_55%)]" />
-                        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(80%_70%_at_90%_20%,rgba(99,102,241,.18),transparent_55%)]" />
-                        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(90%_80%_at_60%_120%,rgba(236,72,153,.12),transparent_55%)]" />
+                        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(120%_90%_at_10%_10%,rgba(168,85,247,.17),transparent_55%)]" />
+                        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(80%_70%_at_90%_20%,rgba(99,102,241,.14),transparent_55%)]" />
+                        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(90%_80%_at_60%_120%,rgba(236,72,153,.10),transparent_55%)]" />
                         <div aria-hidden className="absolute inset-0 bg-gradient-to-b from-white/0 via-white/[0.02] to-black/40" />
 
                         <div className="relative p-8 md:p-10">
-                          <div className="flex items-center justify-between gap-4 mb-8">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
-                                <Sparkles className="w-6 h-6 text-violet-200" />
-                              </div>
-                              <div className="text-right">
-                                <div className="text-[11px] text-gray-400 uppercase tracking-[0.25em]">ATHEER</div>
-                                <div className="text-xl md:text-2xl font-black">مرحباً بك</div>
-                              </div>
-                            </div>
-
-                            <div className="hidden md:flex items-center gap-2">
-                              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-gray-200">
-                                <ShieldCheck className="w-4 h-4 text-emerald-300" />
-                                PWA سريع
-                              </span>
-                              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs text-gray-200">
-                                <Layers className="w-4 h-4 text-violet-300" />
-                                Experience-first
-                              </span>
-                            </div>
+                          {/* Eyebrow label */}
+                          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-4 py-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+                            <span className="text-[10px] uppercase tracking-[0.22em] text-violet-300 font-bold">ATHEER · تجربة الهدية</span>
                           </div>
 
                           <h1 className="text-4xl md:text-5xl font-black leading-[1.1]">
-                            أثير يحوّل الهدية إلى{" "}
+                            الهدية التي تُشعَر بها —{" "}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-fuchsia-300 to-pink-300">
-                              تجربة
+                              قبل أن تُفتَح
                             </span>
                           </h1>
 
                           <p className="mt-4 text-gray-300/80 text-sm md:text-base leading-relaxed max-w-2xl">
-                            QR → رحلة أسئلة/ألغاز → كشف الهدية. تصميم فخم مستوحى من واجهات شركات الذكاء الاصطناعي… لكن محوره «المشاعر».
+                            يمسح المستلم QR… ويدخل رحلة تفاعلية قصيرة من الأسئلة والألغاز… ثم تأتي لحظة الكشف.
                           </p>
 
-                          <div className="mt-8 space-y-4">
-                            <div className="rounded-3xl border border-white/12 bg-white/5 p-4 md:p-5">
-                              <div className="text-[11px] text-gray-400 mb-2">ابدأ من هنا</div>
+                          <p className="mt-3 text-gray-300/60 text-sm italic">
+                            "يمسح QR… تبدأ الرحلة… ثم تأتي لحظة الكشف."
+                          </p>
+
+                          <div className="mt-7 space-y-4">
+                            <div className="rounded-3xl border border-white/[0.09] bg-white/[0.04] p-4 md:p-5">
+                              <div className="text-[11px] text-gray-400 mb-3">ابدأ التجربة</div>
                               <div className="flex flex-col sm:flex-row gap-3">
                                 <PrimaryButton
                                   onClick={() => {
-                                    // Use recommendation if available
                                     setView("tiers");
                                   }}
                                   className="flex-1"
@@ -1473,22 +1527,20 @@ const App = () => {
                               </div>
                             </div>
 
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {/* Trust / value strip */}
+                            <div className="flex flex-wrap gap-2">
                               {[
-                                { icon: <Smartphone className="w-4 h-4" />, label: "Mobile-first", desc: "جوال أولاً" },
-                                { icon: <ShieldCheck className="w-4 h-4" />, label: "Trust", desc: "ثقة/أمان" },
-                                { icon: <Puzzle className="w-4 h-4" />, label: "Challenges", desc: "ألغاز" },
-                                { icon: <Heart className="w-4 h-4" />, label: "Emotion", desc: "مشاعر" },
-                              ].map((s) => (
-                                <div key={s.label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                                  <div className="flex items-center gap-2 text-violet-200 font-black text-sm">
-                                    <span className="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                                      {s.icon}
-                                    </span>
-                                    {s.desc}
-                                  </div>
-                                  <div className="text-[11px] text-gray-500 mt-2">{s.label}</div>
-                                </div>
+                                { icon: <Gift className="w-3.5 h-3.5" />, label: "هدية + تجربة" },
+                                { icon: <Sparkles className="w-3.5 h-3.5" />, label: "QR مخصص" },
+                                { icon: <Smartphone className="w-3.5 h-3.5" />, label: "مناسبة للجوال" },
+                              ].map((v) => (
+                                <span
+                                  key={v.label}
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300"
+                                >
+                                  <span className="text-violet-300">{v.icon}</span>
+                                  {v.label}
+                                </span>
                               ))}
                             </div>
                           </div>
@@ -1505,7 +1557,7 @@ const App = () => {
                           alt=""
                           decoding="async"
                           fetchPriority="high"
-                          className="absolute inset-0 w-full h-full object-cover opacity-40"
+                          className="absolute inset-0 w-full h-full object-cover opacity-35"
                         />
                         <div className={cx("absolute inset-0 bg-gradient-to-br", templates[activeTemplate]?.color)} />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#07070a] via-[#07070a]/35 to-transparent" />
@@ -1514,7 +1566,7 @@ const App = () => {
                           <div className="flex items-center justify-between gap-3">
                             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-gray-200">
                               <Star className="w-4 h-4 text-amber-300" />
-                              Template Spotlight
+                              ثيمات التجربة
                             </span>
 
                             <div className="flex items-center gap-2">
@@ -1539,8 +1591,8 @@ const App = () => {
 
                             <div className="mt-6 grid grid-cols-3 gap-3">
                               {[
-                                { icon: <MousePointer2 className="w-4 h-4" />, label: "سهل" },
-                                { icon: <Puzzle className="w-4 h-4" />, label: "تحدي" },
+                                { icon: <MousePointer2 className="w-4 h-4" />, label: "فتح" },
+                                { icon: <Puzzle className="w-4 h-4" />, label: "تشويق" },
                                 { icon: <Gift className="w-4 h-4" />, label: "كشف" },
                               ].map((x) => (
                                 <div key={x.label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
@@ -1574,27 +1626,55 @@ const App = () => {
 
                 <ReviewsSection />
 
-                <div className="mt-16">
-                  <div className="text-center mb-8">
-                    <div className="text-sm text-gray-400">كيف تعمل أثير؟</div>
-                    <div className="text-2xl md:text-3xl font-black mt-2">3 خطوات… وتبدأ المفاجأة</div>
+                <div className="mt-20">
+                  <div className="text-center mb-10">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 mb-4">
+                      <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
+                      <span className="text-[10px] uppercase tracking-[0.22em] text-fuchsia-300 font-bold">كيف تبدأ التجربة</span>
+                    </div>
+                    <div className="text-2xl md:text-3xl font-black">من اختيار الفكرة… إلى لحظة الكشف</div>
+                    <div className="mt-2 text-sm text-gray-400 max-w-md mx-auto">رحلة بسيطة، لكن كل خطوة فيها مقصودة.</div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {[
-                      { icon: <Gift className="w-5 h-5" />, title: "اختر الفئة", desc: "برونزية، فضية، أو ذهبية حسب ميزانيتك" },
-                      { icon: <Palette className="w-5 h-5" />, title: "املأ البصمة", desc: "أسئلة قصيرة تعطي الذكاء صورة عن الذوق" },
-                      { icon: <Sparkles className="w-5 h-5" />, title: "استلم QR", desc: "تجربة تفاعلية تنتهي بكشف الهدية" },
+                      {
+                        num: "01",
+                        icon: <Gift className="w-5 h-5" />,
+                        glow: "rgba(168,85,247,.18)",
+                        title: "نحدد الشخص والمناسبة",
+                        desc: "سواء كان صديقاً أو والداً أو شريكاً — بصمة كل هدية تختلف.",
+                      },
+                      {
+                        num: "02",
+                        icon: <Palette className="w-5 h-5" />,
+                        glow: "rgba(236,72,153,.16)",
+                        title: "نبني بصمة الهدية",
+                        desc: "أسئلة ذكية تشكّل تجربة كشف مخصصة من الألوان والألغاز.",
+                      },
+                      {
+                        num: "03",
+                        icon: <Sparkles className="w-5 h-5" />,
+                        glow: "rgba(99,102,241,.18)",
+                        title: "QR يصل… ولحظة الكشف تبدأ",
+                        desc: "يمسح المستلم الـQR ويدخل رحلة تفاعلية — ثم تُكشَف الهدية.",
+                      },
                     ].map((x) => (
-                      <GlassCard key={x.title} className="p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-violet-200">
-                            {x.icon}
+                      <GlassCard key={x.num} className="p-6 overflow-hidden">
+                        <div
+                          aria-hidden
+                          className="absolute inset-0 opacity-70"
+                          style={{ background: `radial-gradient(80% 60% at 50% 0%, ${x.glow}, transparent 65%)` }}
+                        />
+                        <div className="relative">
+                          <div className="flex items-start justify-between mb-5">
+                            <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-violet-200">
+                              {x.icon}
+                            </div>
+                            <span className="font-mono text-2xl font-black text-white/15">{x.num}</span>
                           </div>
-                          <div>
-                            <div className="font-black">{x.title}</div>
-                            <div className="text-sm text-gray-400 mt-1">{x.desc}</div>
-                          </div>
+                          <div className="font-black text-base">{x.title}</div>
+                          <div className="text-sm text-gray-400 mt-2 leading-relaxed">{x.desc}</div>
                         </div>
                       </GlassCard>
                     ))}
