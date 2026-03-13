@@ -349,7 +349,7 @@ export default function GiftExperience() {
   );
 
   return (
-    <div dir="rtl" lang="ar">
+    <div dir="rtl" lang="ar" className="bg-[#07070a]">
       <AnimatePresence mode="wait">
         {status === "loading" && (
           <motion.div key="loading" exit={{ opacity: 0 }}>
