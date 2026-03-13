@@ -47,8 +47,8 @@ Source files live at the **project root** — there is no `src/` directory.
 | `AtheerAdminDashboard.jsx` | Admin dashboard (~610 lines, single file) |
 | `GiftExperience.jsx` | QR gift reveal page for recipients (~400 lines) |
 | `cloudflare_worker.js` | Cloudflare Worker — Gemini AI proxy |
-| `index.css` | Only the three `@tailwind` directives |
-| `index.html` | HTML entry (lang="ar", dir="rtl", PWA meta tags) |
+| `index.css` | Tailwind directives + global dark-bg + `overscroll-behavior-y:none` |
+| `index.html` | HTML entry (lang="ar", dir="rtl", PWA meta tags, inline `body` dark bg) |
 | `manifest.json` | PWA manifest (standalone, Arabic, dark theme) |
 | `vite.config.js` | Vite config — port 3000, source maps enabled |
 | `tailwind.config.js` | Scans `./index.html`, `./src/**/*.{js,jsx}`, and `./*.jsx` |
@@ -119,9 +119,9 @@ prefersReducedMotion, saveData
 - `PrimaryButton`, `SecondaryButton` — Styled button variants
 - `StepPill` — Funnel step indicator pill
 - `PageShell` — Page layout wrapper
-- `Background` — Animated gradient orbs + grid pattern (framer-motion)
-- `Navbar` — Fixed header: logo, step pills, "Demo" & "Start" buttons
-- `TiltCard` — 3D tilt effect on hover (motion values)
+- `Background` — Animated gradient orbs + grid pattern (framer-motion). Starts with a solid `bg-[#07070a]` base div to prevent Safari white-flash. Orbs use `style={{ willChange: "transform" }}` for GPU promotion. **No** white sweep gradient (removed as Safari hazard).
+- `Navbar` — Fixed header: logo, step pills, "Demo" & "Start" buttons. Uses `bg-[#07070a]/80 backdrop-blur-xl` (not `/65` or `backdrop-blur-2xl`).
+- `TiltCard` — Tilt effect on hover (motion values). Does **not** use `transformStyle: "preserve-3d"` or child `translateZ` (removed as Safari stacking-context hazard).
 - `ReviewsSection` — Customer testimonials carousel (4 reviews, autoplay)
 - `TryGiftFlowWizard` — 3-step mini wizard (persona → surprise type → tone) that sets `recommendedTierId`
 - `DemoModal` — Interactive QR unlock simulator (unlock code: `"2024"`) — defined inside the main App component
@@ -152,6 +152,16 @@ const slideIn = { initial: { x: 44, opacity: 0 }, animate: { x: 0, opacity: 1 },
 - Scrolls to top on every view change
 - `decoding="async"` + `fetchPriority="high"` on above-fold images
 - `<link rel="preconnect">` to Unsplash CDN (in `index.html`)
+
+### Safari / iOS Compatibility
+Several fixes are in place to prevent white-flash repaints on iOS Safari — do not revert them:
+- `index.css`: `html, body, #root { background-color: #07070a; }` and `body { overscroll-behavior-y: none; }` (prevents bounce-scroll exposing white)
+- `index.html`: `<body style="background-color:#07070a">` (earliest possible dark paint)
+- `Background`: solid `<div className="absolute inset-0 bg-[#07070a]" />` as first child; `willChange: "transform"` on each animated orb; white sweep gradient removed
+- `TiltCard`: `transformStyle: "preserve-3d"` and child `translateZ(18px)` removed (Safari stacking-context hazard)
+- Navbar: `bg-[#07070a]/80 backdrop-blur-xl` — do not loosen opacity below 75% or switch to `backdrop-blur-2xl`
+- `App` root wrapper `<div className="relative bg-[#07070a]">` around `Background`
+- `GiftExperience.jsx` outer div: `className="bg-[#07070a]"` to avoid white flash during `AnimatePresence` screen transitions
 
 ---
 
